@@ -1,5 +1,5 @@
-tim: tim.rs
+tim: tim.rs datatypes.rs
 	rustc tim.rs
 
-opt: tim.rs
-	rustc -O tim.rs
+timopt: tim.rs
+	rustc -O -o timopt tim.rs

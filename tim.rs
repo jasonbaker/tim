@@ -1,40 +1,21 @@
 extern mod extra;
 
+use datatypes::*;
+
 use extra::json;
 use extra::treemap::TreeMap;
 
 use std::at_vec;
 use std::from_str::from_str;
+use std::hashmap::HashMap;
 use std::io;
 use std::path::Path;
 use std::str::from_utf8;
 use std::vec;
 
-#[deriving(ToStr)]
-enum Value {
-  String(~str),
-  Int(int),
-  Float(float)
-}
+mod datatypes;
 
-#[deriving(ToStr,Clone)]
-enum Address {
-  Arg(int),
-  Comb(~str),
-  Label(~str),
-}
-
-#[deriving(ToStr,Clone)]
-enum Instruction {
-  Take(int),
-  Push(Address),
-  Enter(Address)
-}
-
-struct Closure {
-  instr: Instruction,
-  environ: ~[Closure]
-}
+type JsonObj = TreeMap<~str, json::Json>;
 
 // For simple slurping. Will abort program on failure.
 fn slurp(filename: ~str) -> ~str {
@@ -45,10 +26,17 @@ fn slurp(filename: ~str) -> ~str {
   }
 }
 
-fn get_key_or_fail<'r>(key: &~str, obj: &'r TreeMap<~str, json::Json>) -> &'r json::Json {
+fn get_key_or_fail<'r>(key: &~str, obj: &'r JsonObj) -> &'r json::Json {
   return match obj.find(key) {
     Some(ref val) => *val,
     _ => fail!("Could not find key" + *key)
+  };
+}
+
+fn coerce_to_obj<'r>(j: &'r json::Json) -> &'r JsonObj {
+  return match j {
+    &json::Object(ref o) => &**o,
+    _ => fail!("Expected object")
   };
 }
 
@@ -59,7 +47,7 @@ fn coerce_to_str<'r>(s: &'r json::Json) -> &'r ~str {
   }
 }
 
-fn get_int_field(key: &~str, obj: &TreeMap<~str, json::Json>) -> int {
+fn get_int_field(key: &~str, obj: &JsonObj) -> int {
   let field = get_key_or_fail(key, obj);
   let retval = match field {
     &json::Number(ref i) => i,
@@ -68,24 +56,29 @@ fn get_int_field(key: &~str, obj: &TreeMap<~str, json::Json>) -> int {
   return *retval as int;
 }
 
-fn get_str_field(key: &~str, obj: &TreeMap<~str, json::Json>) -> ~str {
+fn get_obj_field<'r>(key: &~str, obj: &'r JsonObj) -> &'r JsonObj {
+  let field = get_key_or_fail(key, obj);
+  return coerce_to_obj(field);
+}
+
+fn get_str_field(key: &~str, obj: &JsonObj) -> ~str {
   let field = get_key_or_fail(key, obj);
   return coerce_to_str(field).clone();
 }
 
-fn extract_instruction(obj: &TreeMap<~str, json::Json>) -> Instruction {
+fn extract_instruction(obj: &JsonObj) -> Instruction {
   let instr_field =  get_key_or_fail(&~"instr", obj);
   let instr_name = coerce_to_str(instr_field);
 
   match instr_name {
-    &~"Take" => extract_take(obj),
+    &~"Take" => Take(get_int_field(&~"arg", obj)),
     &~"Enter" => Enter(extract_address(obj)),
     &~"Push" => Push(extract_address(obj)),
     _ => fail!("Unsupported instruction")
   }
 }
 
-fn extract_take (obj: &TreeMap<~str, json::Json>) -> Instruction {
+fn extract_take (obj: &JsonObj) -> Instruction {
   let intval = match obj.find(&~"arg") {
     Some(&json::Number(ref i)) => i,
     _ => fail!("Invalid instruction arg")
@@ -94,7 +87,7 @@ fn extract_take (obj: &TreeMap<~str, json::Json>) -> Instruction {
   return Take(*intval as int);
 }
 
-fn extract_address(obj: &TreeMap<~str, json::Json>) -> Address {
+fn extract_address(obj: &JsonObj) -> Address {
   let addr_field = get_key_or_fail(&~"addr", obj);
   let addr_name = coerce_to_str(addr_field);
 
@@ -106,9 +99,9 @@ fn extract_address(obj: &TreeMap<~str, json::Json>) -> Address {
   }
 }
 
-fn walk_json(node: json::Json) -> @[Instruction] {
+fn extract_instructions(node: &json::Json) -> ~[Instruction] {
   let json_list = match node {
-    json::List(l) => l,
+    &json::List(ref l) => l,
     _ => fail!("Expected list")
   };
 
@@ -122,7 +115,30 @@ fn walk_json(node: json::Json) -> @[Instruction] {
       append(extract_instruction(&**obj));
     }
   };
-  return at_vec::to_managed(retval);
+  return retval;
+}
+
+fn build_codestore(node: &json::Json) -> 
+    ~HashMap<~str, ~[Instruction]> {
+  let mut retval: ~HashMap<~str, ~[Instruction]> = ~HashMap::new();
+  let json_obj = coerce_to_obj(node);
+
+  for (key, value) in json_obj.iter() {
+    retval.insert(key.clone(), extract_instructions(value));
+  }
+
+  return retval;
+}
+
+// Given a json object reperesenting a source file, create an initial state
+fn init_state(node: &json::Json) -> ~State {
+  return ~State {
+    instructions: @[Enter(Label(~"main"))],
+    stack: ~[],
+    frame: FrameNone,
+    codestore: build_codestore(node),
+    heap: ~[]
+  };
 }
 
 fn main() {
@@ -130,11 +146,9 @@ fn main() {
 
   let r: Result<json::Json, json::Error> = extra::json::from_str(json_text);
   let val = match r {
-    Ok(j) => walk_json(j),
+    Ok(j) => init_state(&j),
     Err(_) => fail!("Invalid JSON"),
   };
 
   println(val.to_str());
-
-  let mut v_stack: ~[@Value] = ~[];
 }

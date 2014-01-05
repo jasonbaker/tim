@@ -1,0 +1,26 @@
+[
+  {
+    "instr": "Take",
+    "arg": 1
+  },
+  {
+    "instr": "Enter",
+    "addr": "Arg",
+    "arg": 1
+  },
+  {
+    "instr": "Enter",
+    "addr": "Comb",
+    "arg": "foo"
+  },
+  {
+    "instr": "Enter",
+    "addr": "Label",
+    "arg": "l"
+  },
+  {
+    "instr": "Push",
+    "addr": "Comb",
+    "arg": "bar"
+  }
+]

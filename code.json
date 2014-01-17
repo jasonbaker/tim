@@ -1,28 +1,68 @@
 {
-  "main": [
+  "K": [
     {
       "instr": "Take",
-      "arg": 1
+      "arg": 2
+    },
+    {
+      "instr": "Enter",
+      "addr": "Arg",
+      "arg": 0
+    }
+  ],
+  "S": [
+    {
+      "instr": "Take",
+      "arg": 3
+    },
+    {
+      "instr": "Push",
+      "addr": "Label",
+      "arg": "f"
+    },
+    {
+      "instr": "Push",
+      "addr": "Arg",
+      "arg": 2
+    },
+    {
+      "instr": "Enter",
+      "addr": "Arg",
+      "arg": 0
+    }
+  ],
+  "f": [
+    {
+      "instr": "Push",
+      "addr": "Arg",
+      "arg": 2
     },
     {
       "instr": "Enter",
       "addr": "Arg",
       "arg": 1
+    }
+  ],
+  "main": [
+    {
+      "instr": "Push",
+      "addr": "Const",
+      "arg": 3
     },
     {
-      "instr": "Enter",
-      "addr": "Comb",
-      "arg": "foo"
+      "instr": "Push",
+      "addr": "Label",
+      "arg": "K"
+    },
+    {
+      "instr": "Push",
+      "addr": "Label",
+      "arg": "K"
     },
     {
       "instr": "Enter",
       "addr": "Label",
-      "arg": "l"
-    },
-    {
-      "instr": "Push",
-      "addr": "Comb",
-      "arg": "bar"
+      "arg": "S"
     }
   ]
 }

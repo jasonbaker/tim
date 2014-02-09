@@ -1,5 +1,3 @@
-use extra::serialize::{Decodable, Decoder};
-
 use std::gc::Gc;
 use std::hashmap;
 

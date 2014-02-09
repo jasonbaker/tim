@@ -1,68 +1,88 @@
 {
   "K": [
     {
-      "instr": "Take",
-      "arg": 2
+      "variant": "Take",
+      "fields": [2]
     },
     {
-      "instr": "Enter",
-      "addr": "Arg",
-      "arg": 0
+      "variant": "Enter",
+      "fields": [{
+          "variant": "Arg",
+          "fields": [0]
+      }]
     }
   ],
   "S": [
     {
-      "instr": "Take",
-      "arg": 3
+      "variant": "Take",
+      "fields": [3]
     },
     {
-      "instr": "Push",
-      "addr": "Label",
-      "arg": "f"
+      "variant": "Push",
+      "fields": [{
+        "variant": "Label",
+        "fields": ["f"]     
+      }]
     },
     {
-      "instr": "Push",
-      "addr": "Arg",
-      "arg": 2
+      "variant": "Push",
+      "fields": [{
+        "variant": "Arg",
+        "fields": [2]  
+      }]
     },
     {
-      "instr": "Enter",
-      "addr": "Arg",
-      "arg": 0
+      "variant": "Enter",
+      "fields": [{
+        "variant": "Arg",
+        "fields": [0] 
+      }]
     }
   ],
   "f": [
     {
-      "instr": "Push",
-      "addr": "Arg",
-      "arg": 2
+      "variant": "Push",
+      "fields": [{
+        "variant": "Arg",
+        "fields": [2]   
+      }]
     },
     {
-      "instr": "Enter",
-      "addr": "Arg",
-      "arg": 1
+      "variant": "Enter",
+      "fields": [{
+        "variant": "Arg",
+        "fields": [1]   
+      }]
     }
   ],
   "main": [
     {
-      "instr": "Push",
-      "addr": "Const",
-      "arg": 3
+      "variant": "Push",
+      "fields": [{
+        "variant": "Const",
+        "fields": [3]
+      }]
     },
     {
-      "instr": "Push",
-      "addr": "Label",
-      "arg": "K"
+      "variant": "Push",
+      "fields": [{
+        "variant": "Label",
+        "fields": ["K"] 
+      }]
     },
     {
-      "instr": "Push",
-      "addr": "Label",
-      "arg": "K"
+      "variant": "Push",
+      "fields": [{
+        "variant": "Label",
+        "fields": ["K"] 
+      }]
     },
     {
-      "instr": "Enter",
-      "addr": "Label",
-      "arg": "S"
+      "variant": "Enter",
+      "fields": [{
+        "variant": "Label",
+        "fields": ["S"]
+      }]
     }
   ]
 }

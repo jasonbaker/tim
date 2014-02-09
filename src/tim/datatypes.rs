@@ -5,13 +5,6 @@ type Frame = ~[Gc<Closure>];
 pub type InstructionList = ~[Instruction];
 pub type CodeStore = ~hashmap::HashMap<~str, InstructionList>;
 
-#[deriving(ToStr)]
-pub enum Value {
-  String(~str),
-  Int(int),
-  Float(f64)
-}
-
 #[deriving(ToStr,Clone,Eq,Decodable)]
 pub enum Address {
   Arg(int),

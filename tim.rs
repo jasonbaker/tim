@@ -1,14 +1,15 @@
 extern mod extra;
 
-use datatypes::*;
+use datatypes::{Address, Arg, Comb, Const, CodeStore, Enter, FrameNone, Label, Instruction, 
+  InstructionList, Push, State, Take};
 
 use extra::json;
 use extra::treemap::TreeMap;
 
-use std::at_vec;
 use std::from_str::from_str;
+use std::gc::Gc;
 use std::hashmap::HashMap;
-use std::io;
+use std::io::File;
 use std::path::Path;
 use std::str::from_utf8;
 use std::vec;
@@ -17,14 +18,14 @@ mod datatypes;
 
 type JsonObj = TreeMap<~str, json::Json>;
 
-// For simple slurping. Will abort program on failure.
+/*// For simple slurping. Will abort program on failure.
 fn slurp(filename: ~str) -> ~str {
   let read_result = io::read_whole_file(&Path(filename));
   match read_result {
     Ok(instr) => from_utf8(instr),
     Err(e) => fail!(e)
   }
-}
+}*/
 
 pub fn get_key_or_fail<'r>(key: &~str, obj: &'r JsonObj) -> &'r json::Json {
   return match obj.find(key) {
@@ -106,7 +107,7 @@ fn extract_instructions(node: &json::Json) -> InstructionList {
     _ => fail!("Expected list")
   };
 
-  let retval = do vec::build(None) |append| {
+  return vec::build(None, |append| {
     for j in json_list.iter() {
       let obj = match j {
         &json::Object(ref t) => t,
@@ -115,8 +116,7 @@ fn extract_instructions(node: &json::Json) -> InstructionList {
 
       append(extract_instruction(&**obj));
     }
-  };
-  return at_vec::to_managed(retval);
+  });
 }
 
 fn build_codestore(node: &json::Json) -> 
@@ -136,7 +136,7 @@ fn init_state(node: &json::Json) -> ~State {
   return ~State {
     instructions: ~[Enter(Label(~"main"))],
     stack: ~[],
-    fidx: @FrameNone,
+    fidx: Gc::new(FrameNone),
     codestore: build_codestore(node),
   };
 }
@@ -168,9 +168,9 @@ fn handle_push(addr: Address, state: &mut State) {
 }
 
 fn main() {
-  let json_text = slurp(~"/Users/jason/src/tim/code.json");
+  let json_text = File::open(&Path::new(~"/Users/jason/src/tim/code.json")).read_to_end();
 
-  let r: Result<json::Json, json::Error> = extra::json::from_str(json_text);
+  let r: Result<json::Json, json::Error> = extra::json::from_str(from_utf8(json_text));
   let mut state = match r {
     Ok(j) => init_state(&j),
     Err(_) => fail!("Invalid JSON"),

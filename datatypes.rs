@@ -1,16 +1,17 @@
 extern mod extra;
 
+use std::gc::Gc;
 use std::hashmap;
 
-type Frame = ~[@Closure];
-pub type InstructionList = @[Instruction];
+type Frame = ~[Gc<Closure>];
+pub type InstructionList = ~[Instruction];
 pub type CodeStore = ~hashmap::HashMap<~str, InstructionList>;
 
 #[deriving(ToStr)]
 pub enum Value {
   String(~str),
   Int(int),
-  Float(float)
+  Float(f64)
 }
 
 #[deriving(ToStr,Clone)]
@@ -22,15 +23,16 @@ pub enum Address {
 }
 
 impl Address {
-  pub fn to_closure(&self, state: &State) -> @Closure {
+  pub fn to_closure(self, state: &mut State) -> Gc<Closure> {
     match self {
-      &Const(i) => return @Closure {instrs: @[], fidx: @FrameInt(i)},
-      &Label(ref l) =>  {
-        return @Closure {instrs: *state.codestore.get(l), fidx: state.fidx}
+      Const(i) => return Gc::new(Closure {instrs: ~[], fidx: Gc::new(FrameInt(i))}),
+      Label(l) =>  {
+        let instrs = state.codestore.get(&l).clone();
+        return Gc::new(Closure {instrs: instrs, fidx: state.fidx})
       },
-      &Arg(n) => {
-        match state.fidx {
-          @FramePtr(ref f) => return f[n],
+      Arg(n) => {
+        match state.fidx.borrow() {
+          &FramePtr(ref f) => return f[n],
           _ => fail!("Expected frame pointer") 
         }
       }
@@ -49,8 +51,8 @@ pub enum Instruction {
 #[deriving(ToStr)]
 pub struct State {
   instructions: ~[Instruction],
-  stack: ~[@Closure],
-  fidx: @FrameIndex,
+  stack: ~[Gc<Closure>],
+  fidx: Gc<FrameIndex>,
   codestore: CodeStore,
 }
 
@@ -64,15 +66,15 @@ impl State {
     for _ in range(0, n) {
       frame.push(self.stack.pop());
     }
-    self.fidx = @FramePtr(frame);
+    self.fidx = Gc::new(FramePtr(frame));
   }
 
-  pub fn push_closure(&mut self, c: @Closure) {
+  pub fn push_closure(&mut self, c: Gc<Closure>) {
     self.stack.push(c);
   }
 
-  pub fn set_closure(&mut self, c: @Closure) {
-    self.instructions = c.instrs.into_owned();
+  pub fn set_closure(&mut self, c: Gc<Closure>) {
+    self.instructions = c.borrow().instrs.clone();
   }
 
   pub fn pop_instruction(&mut self) -> Instruction {
@@ -83,12 +85,12 @@ impl State {
 #[deriving(ToStr)]
 pub struct Closure {
   instrs: InstructionList,
-  fidx: @FrameIndex
+  fidx: Gc<FrameIndex>
 }
 
-impl ToStr for @Closure {
+impl ToStr for Gc<Closure> {
   fn to_str(&self) -> ~str {
-    let closure: Closure = **self;
+    let closure = self.borrow();
     return closure.to_str();
   }
 }
@@ -98,4 +100,11 @@ pub enum FrameIndex {
   FramePtr(Frame),
   FrameInt(int),
   FrameNone 
+}
+
+impl ToStr for Gc<FrameIndex> {
+  fn to_str(&self) -> ~str {
+    let fidx = self.borrow();
+    return fidx.to_str();
+  } 
 }

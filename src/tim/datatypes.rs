@@ -16,7 +16,7 @@ pub enum Address {
 impl Address {
   pub fn to_closure(self, state: &mut State) -> Gc<Closure> {
     match self {
-      Const(i) => return Gc::new(Closure {instrs: ~[], fidx: Gc::new(FrameInt(i))}),
+      Const(i) => return Gc::new(Closure {instrs: ~[PushV(CurrentFrame), Return], fidx: Gc::new(FrameInt(i))}),
       Label(l) =>  {
         let instrs = state.codestore.get(&l).clone();
         return Gc::new(Closure {instrs: instrs, fidx: state.fidx})
@@ -32,17 +32,30 @@ impl Address {
   }
 }
 
+#[deriving(ToStr,Clone,Eq,Decodable)]
+pub enum ValueAddress {
+  CurrentFrame,
+  IntVal(int) 
+}
+
+#[deriving(ToStr,Clone,Eq,Decodable)]
+pub enum ValueOp {Sub, Add, Div, Mul}
+
 #[deriving(ToStr,Clone,Decodable)]
 pub enum Instruction {
   Take(int),
   Push(Address),
-  Enter(Address)
+  PushV(ValueAddress),
+  Enter(Address),
+  Return,
+  Op(ValueOp)
 }
 
 #[deriving(ToStr)]
 pub struct State {
   instructions: ~[Instruction],
   stack: ~[Gc<Closure>],
+  vstack: ~[int],
   fidx: Gc<FrameIndex>,
   codestore: CodeStore,
 }
@@ -65,11 +78,32 @@ impl State {
   }
 
   pub fn set_closure(&mut self, c: Gc<Closure>) {
-    self.instructions = c.borrow().instrs.clone();
+    let closure = c.borrow();
+    self.instructions = closure.instrs.clone();
+    self.fidx = closure.fidx;
   }
 
   pub fn pop_instruction(&mut self) -> Instruction {
     return self.instructions.shift();
+  }
+
+  pub fn pop_stack(&mut self) -> Gc<Closure> {
+    return self.stack.shift();
+  }
+
+  pub fn push_frame_value(&mut self) {
+    match self.fidx.borrow() {
+      &FrameInt(i) => self.push_value(i),
+      _ => fail!("Unexpected frame value " + self.fidx.to_str())
+    }
+  }
+
+  pub fn push_value(&mut self, val: int) {
+    self.vstack.push(val);
+  }
+
+  pub fn pop_value(&mut self) -> int {
+    return self.vstack.shift();
   }
 }
 

@@ -1,0 +1,25 @@
+{
+  "main": [
+    {
+      "variant": "PushV",
+      "fields": [{
+        "variant": "IntVal",
+        "fields": [1]
+      }]
+    },
+    {
+      "variant": "PushV",
+      "fields": [{
+        "variant": "IntVal",
+        "fields": [1]
+      }]
+    },
+    {
+      "variant": "Op",
+      "fields": [{
+        "variant": "Sub",
+        "fields": []
+      }]
+    }
+  ]
+}

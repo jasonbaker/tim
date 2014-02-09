@@ -2,8 +2,7 @@
 
 extern mod extra;
 
-use datatypes::{Address, Arg, Comb, Const, CodeStore, Enter, FrameNone, Label, Instruction, 
-  InstructionList, Push, State, Take};
+use datatypes::*;
 
 use extra::json;
 use extra::treemap::TreeMap;
